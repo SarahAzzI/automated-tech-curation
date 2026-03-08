@@ -1,0 +1,166 @@
+{
+  "name": "My workflow 2",
+  "nodes": [
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        0
+      ],
+      "id": "ddcbf67d-301e-4f68-817f-c77c892c7f0e",
+      "name": "When clicking ‘Execute workflow’"
+    },
+    {
+      "parameters": {
+        "url": "={{ $json.url }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.rssFeedRead",
+      "typeVersion": 1.2,
+      "position": [
+        624,
+        0
+      ],
+      "id": "962aa835-5420-4a32-b171-8c7daebc3335",
+      "name": "RSS Read"
+    },
+    {
+      "parameters": {
+        "authentication": "webhook",
+        "content": "=Nouvelle veille tech disponible !",
+        "options": {},
+        "embeds": {
+          "values": [
+            {
+              "description": "={{ $json.contentSnippet }}",
+              "title": "={{ $json.title }}",
+              "url": "={{ $json.link }}",
+              "thumbnail": "https://www.stat4decision.com/wp-content/uploads/2018/06/logo_final_95.png"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.discord",
+      "typeVersion": 2,
+      "position": [
+        1040,
+        0
+      ],
+      "id": "de8153dc-abb7-4aee-adbf-995277303f89",
+      "name": "Discord",
+      "webhookId": "9fa7e3b2-a3ff-4a25-86b9-343630a07b03",
+      "credentials": {
+        "discordWebhookApi": {
+          "id": "e9ZTu3dRTaHgXSzV",
+          "name": "Discord Webhook account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "33836fe4-3071-471d-bb7a-c6a6823e1fa8",
+              "leftValue": "={{ $json.isoDate }}",
+              "rightValue": "={{ $now.minus({ days: 1 }) }}",
+              "operator": {
+                "type": "dateTime",
+                "operation": "afterOrEquals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.filter",
+      "typeVersion": 2.3,
+      "position": [
+        832,
+        0
+      ],
+      "id": "80968962-f7f7-4247-a012-ab7c85b5c9f5",
+      "name": "Filter"
+    },
+    {
+      "parameters": {
+        "jsCode": "return [\n  { json: { url: 'https://www.stat4decision.com/fr/feed/' } },\n  { json: { url: 'https://blog.octo.com/feed/' } },\n  { json: { url: 'https://medium.com/feed/tag/data-engineering' } },\n  { json: { url: 'https://practicaldataengineering.substack.com/feed' } },\n  { json: { url: 'https://towardsdatascience.com/feed' } },\n];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        208,
+        0
+      ],
+      "id": "88b182bc-f643-4067-8dae-23ce6ab4581c",
+      "name": "Code in JavaScript"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "When clicking ‘Execute workflow’": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "RSS Read": {
+      "main": [
+        [
+          {
+            "node": "Filter",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Filter": {
+      "main": [
+        [
+          {
+            "node": "Discord",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript": {
+      "main": [
+        [
+          {
+            "node": "RSS Read",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "f7b09f86-2ef5-4374-9c2b-1bdeb53d099a",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "f14f34b72f1e2dbfbdfbac87afafe1067cde3cb606a27e26c82718b72c0683f3"
+  },
+  "id": "43gmoKc1YvoXy0vK",
+  "tags": []
+}
