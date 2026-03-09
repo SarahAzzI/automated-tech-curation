@@ -1,0 +1,148 @@
+{
+  "name": "My workflow 3",
+  "nodes": [
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Rôle : Tu es un ingénieur expert en veille technologique spécialisé en IA, MLOps et Cloud.\n\nMission : Analyse les actualités technologiques majeures de ces dernières 24 heures (nous sommes le {{ $now.format('DD/MM/YYYY') }}).\n\nConsignes de rédaction :\n\nSélectionne les 3 actualités les plus impactantes.\n\nPour chaque actualité, attribue une catégorie : CRITIQUE, IMPORTANT ou INFO.\n\nRédige un résumé très court et percutant (150 caractères max).\n\nFormat de réponse obligatoire (JSON STRICT) :\nRéponds uniquement avec un objet JSON valide, sans texte avant ou après.",
+        "batching": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.7,
+      "position": [
+        480,
+        -16
+      ],
+      "id": "db5a71e0-b506-4cb2-96a7-2a768e4e6565",
+      "name": "Basic LLM Chain"
+    },
+    {
+      "parameters": {
+        "model": "nvidia/nemotron-nano-9b-v2:free",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenRouter",
+      "typeVersion": 1,
+      "position": [
+        352,
+        208
+      ],
+      "id": "e0163578-34b3-4552-80c6-75d2db24f90a",
+      "name": "OpenRouter Chat Model",
+      "credentials": {
+        "openRouterApi": {
+          "id": "xUDHiXTWRjWVWbD1",
+          "name": "OpenRouter account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "triggerAtHour": 23
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.3,
+      "position": [
+        224,
+        0
+      ],
+      "id": "3663873c-2fd4-422d-afd1-c056a665d6ac",
+      "name": "Schedule Trigger"
+    },
+    {
+      "parameters": {
+        "jsCode": "let rawData = $json.text || ($json.message && $json.message.content) || $json.content || \"\";\n\nconst start = rawData.indexOf('{');\nconst end = rawData.lastIndexOf('}');\nconst cleanJson = rawData.substring(start, end + 1);\n\ntry {\n  const data = JSON.parse(cleanJson);\n  const liste = data.actualités || data.actualites || [];\n\n  const finalEmbeds = liste.map(item => {\n    // Gestion des couleurs\n    let color = 3447003; // Bleu par défaut\n    const cat = (item.categ || \"\").toUpperCase();\n    if (cat.includes(\"CRITIQUE\")) color = 15158332; // Rouge\n    if (cat.includes(\"IMPORTANT\")) color = 15844367; // Jaune\n\n    return {\n      title: `📢 ${item.categ || \"INFO\"} : Veille IA`,\n      description: item.résumé || item.resume,\n      color: color,\n      url: \"https://news.google.com/search?q=intelligence%20artificielle\"\n    };\n  });\n\n  // On renvoie un SEUL objet contenant la LISTE des embeds\n  return {\n    embeds: finalEmbeds\n  };\n\n} catch (e) {\n  return { error: e.message };\n}"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        832,
+        -16
+      ],
+      "id": "631cfb78-e6f2-402a-8c63-177d16d2e1a6",
+      "name": "Code in JavaScript"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "$$$$$",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ $json }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        1040,
+        -16
+      ],
+      "id": "8e3394ba-e2fa-4a70-a6f0-5fab1cda7561",
+      "name": "HTTP Request"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Basic LLM Chain": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenRouter Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Basic LLM Chain",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "Basic LLM Chain",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "25453431-0093-4138-8ea9-be398417dd3c",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "f14f34b72f1e2dbfbdfbac87afafe1067cde3cb606a27e26c82718b72c0683f3"
+  },
+  "id": "uzBArS8QZhXN1u9Z",
+  "tags": []
+}
